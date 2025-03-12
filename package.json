@@ -19,5 +19,11 @@
   "bugs": {
     "url": "https://github.com/lacumaloya/MACT6340CONTRACT_JAZZ/issues"
   },
-  "homepage": "https://github.com/lacumaloya/MACT6340CONTRACT_JAZZ#readme"
+  "homepage": "https://github.com/lacumaloya/MACT6340CONTRACT_JAZZ#readme",
+  "dependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.2.0",
+    "dotenv": "^16.4.7",
+    "hardhat": "^2.22.19"
+  }
 }
