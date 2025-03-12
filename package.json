@@ -1,0 +1,23 @@
+{
+  "name": "mact_6340_contract_jazz",
+  "version": "1.0.0",
+  "description": "This is the smart contract for my nft mint for MACT6340 course",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx hardhat test",
+    "coverage": "npx hardhat coverage",
+    "deploy": "node ./scripts/deploy.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lacumaloya/MACT6340CONTRACT_JAZZ.git"
+  },
+  "keywords": [],
+  "author": "Jasmine M. Aguilar",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lacumaloya/MACT6340CONTRACT_JAZZ/issues"
+  },
+  "homepage": "https://github.com/lacumaloya/MACT6340CONTRACT_JAZZ#readme"
+}
