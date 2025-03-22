@@ -1,66 +1,147 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
+// Compatible with OpenZeppelin Contracts ^5.0.0
+pragma solidity ^0.8.22;
 
-// Solidity files have to start with this pragma.
-// It will be used by the Solidity compiler to validate its version.
-pragma solidity ^0.8.0;
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721Burnable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {ERC721Royalty} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+error JMACreativeNFTContract__MaxSupplyReached();
+error JMACreativeNFTContract__ValueNotEqualPrice();
+error JMACreativeNFTContract__WrongAvenueForThisTransaction();
 
-// This is the main building block for smart contracts.
-contract Token {
-    // Some string type variables to identify the token.
-    string public name = "My Hardhat Token";
-    string public symbol = "MHT";
+/// @custom:security-contact jasminemariaaguilar@gmail.com
+contract JMACreativeNFTContract is 
+    ERC721, 
+    ERC721Enumerable, 
+    ERC721URIStorage, 
+    ERC721Burnable, 
+    ERC721Royalty,
+    ReentrancyGuard,
+    Ownable 
+{  
+    
+    uint256 private _tokenIdCounter;
+    uint256 private immutable i_mint_price;
+    uint256 private immutable i_max_tokens;
+    string private  s_base_uri;
+    string private s_token_uri_holder;
+    address private immutable i_owner;
 
-    // The fixed amount of tokens, stored in an unsigned integer type variable.
-    uint256 public totalSupply = 1000000;
-
-    // An address type variable is used to store ethereum accounts.
-    address public owner;
-
-    // A mapping is a key/value map. Here we store each account's balance.
-    mapping(address => uint256) balances;
-
-    // The Transfer event helps off-chain applications understand
-    // what happens within your contract.
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-    /**
-     * Contract initialization.
-     */
-    constructor() {
-        // The totalSupply is assigned to the transaction sender, which is the
-        // account that is deploying the contract.
-        balances[msg.sender] = totalSupply;
-        owner = msg.sender;
+    event MintingCompleted(uint tokenId, address owner);
+    event FundsDistributed(address owner, uint amount);
+    
+    constructor(
+        uint256 _mint_price,
+        uint256 _max_tokens,
+        string memory _base_uri,
+        address _royaltyArtist,
+        uint96 _royaltyBasis
+)
+        ERC721("JMACreativeNFTContract", "JMA")
+        Ownable(msg.sender)
+    {
+        i_mint_price = _mint_price;
+        i_max_tokens = _max_tokens;
+        s_base_uri = _base_uri;
+        _setDefaultRoyalty(_royaltyArtist, _royaltyBasis);
+        i_owner = msg.sender;
+    }
+    
+    receive() external payable {
+        revert JMACreativeNFTContract__WrongAvenueForThisTransaction();
     }
 
-    /**
-     * A function to transfer tokens.
-     *
-     * The `external` modifier makes a function *only* callable from *outside*
-     * the contract.
-     */
-    function transfer(address to, uint256 amount) external {
-        // Check if the transaction sender has enough tokens.
-        // If `require`'s first argument evaluates to `false`, the
-        // transaction will revert.
-        require(balances[msg.sender] >= amount, "Not enough tokens");
-
-        // Transfer the amount.
-        balances[msg.sender] -= amount;
-        balances[to] += amount;
-
-        // Notify off-chain applications of the transfer.
-        emit Transfer(msg.sender, to, amount);
+    fallback() external payable {
+        revert JMACreativeNFTContract__WrongAvenueForThisTransaction();
     }
 
-    /**
-     * Read only function to retrieve the token balance of a given account.
-     *
-     * The `view` modifier indicates that it doesn't modify the contract's
-     * state, which allows us to call it without executing a transaction.
-     */
-    function balanceOf(address account) external view returns (uint256) {
-        return balances[account];
+    function mintTo(
+        string calldata uri
+    ) public payable nonReentrant returns (uint256) {
+        uint256 tokenId = _tokenIdCounter;
+
+        if (tokenId >= i_max_tokens) {
+            revert JMACreativeNFTContract__MaxSupplyReached();
+        }
+        //make sure right amount of money
+        if (msg.value !=i_mint_price) {
+            revert JMACreativeNFTContract__ValueNotEqualPrice();
+        }
+        _tokenIdCounter++;
+        uint256 newItemId = _tokenIdCounter;
+         _safeMint(msg.sender, newItemId);
+       emit MintingCompleted(newItemId, msg.sender);
+    s_token_uri_holder = uri;
+       payable(i_owner).transfer(address(this).balance);
+        emit FundsDistributed(i_owner, msg.value);
+        _setTokenURI(newItemId, uri);
+        return newItemId;
+    }
+
+    function getMaxSupply() public view returns (uint256) {
+        return i_max_tokens;
+    }
+
+    function getMintPrice() public view returns (uint256) {
+        return i_mint_price;
+    }
+
+    function getBaseURI() public view returns (string memory) {
+        return s_base_uri;
+    }
+
+    function contractURI() public view returns (string memory) {
+        return s_base_uri;
+    }
+
+    function setRoyalty(
+        address _receiver,
+        uint96 feeNumerator
+    ) public onlyOwner {
+        _setDefaultRoyalty(_receiver, feeNumerator);
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return s_base_uri;
+    }     
+    
+    // The following functions are overrides required by Solidity.
+
+    function _update(address to, uint256 tokenId, address auth)
+        internal
+        override(ERC721, ERC721Enumerable)
+        returns (address)
+    {
+        return super._update(to, tokenId, auth);
+    }
+
+    function _increaseBalance(address account, uint128 value)
+        internal
+        override(ERC721, ERC721Enumerable)
+    {
+        super._increaseBalance(account, value);
+    }
+
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override(ERC721, ERC721URIStorage)
+        returns (string memory)
+    {
+        return super.tokenURI(tokenId);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }
