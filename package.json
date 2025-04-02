@@ -22,10 +22,12 @@
   "homepage": "https://github.com/lacumaloya/MACT6340CONTRACT_JAZZ#readme",
   "dependencies": {
     "@openzeppelin/contracts": "^5.2.0",
+    "chai": "^4.2.0",
     "dotenv": "^16.4.7",
     "hardhat": "^2.22.19"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0"
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "mocha": "^10.0.0"
   }
 }
