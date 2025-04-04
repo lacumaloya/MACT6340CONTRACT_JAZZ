@@ -133,7 +133,8 @@ describe("JMACreativeNFTContract", async function () {
     });
 
     it("should set owner to the deployer's address when constucted", async function () {
-      const expectedValue = "0x90669e14B989BF71aa9035B5BDD202959f9EffE8";
+      const [deployer] = await ethers.getSigners();
+      const expectedValue = deployer.address;
       const currentValue = await JMACreativeNFTContract.owner();
       assert.equal(currentValue.toString(), expectedValue);
     });
@@ -314,8 +315,8 @@ describe("JMACreativeNFTContract", async function () {
 
     it("should have set the token uri during minting function", async function () {
       const [owner, artist, buyer] = await ethers.getSigners();
-      const uriString = "someString";
-      const expectedValue = uriString;
+      const uriString = "1"; // Just use a simple token ID
+      const expectedValue = args.base_uri + uriString; // The contract will append the token ID to the base URI
       const mint1 = await JMACreativeNFTContract.connect(buyer).mintTo(
         uriString,
         { value: args.mint_price }
